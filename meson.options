@@ -1,0 +1,2 @@
+option('variant', type: 'array', value: [],
+        description: 'Wheel variant keys')

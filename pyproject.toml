@@ -11,6 +11,7 @@ dependencies = [
   "scipy>=1.8.0",
   "joblib>=1.2.0",
   "threadpoolctl>=3.1.0",
+  "intel-openmp; 'openmp::provider::iomp' in variant_properties",
 ]
 requires-python = ">=3.10"
 license = "BSD-3-Clause"
@@ -97,11 +98,29 @@ maintenance = ["conda-lock==3.0.1"]
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
+    "meson-python @ https://github.com/wheelnext/meson-python/archive/wheel-variants.tar.gz",
     "meson-python>=0.16.0,<0.19.0",
     "Cython>=3.0.10,<3.2.0",
     "numpy>=2,<2.4.0",
     "scipy>=1.8.0,<1.17.0",
 ]
+
+[variant.default-priorities]
+namespace = ["x86_64", "aarch64", "openmp"]
+
+[variant.providers.aarch64]
+requires = ["provider-variant-aarch64 @ git+https://github.com/wheelnext/variant_aarch64@dev"]
+enable-if = "platform_machine == 'aarch64' or 'arm' in platform_machine"
+plugin-api = "provider_variant_aarch64.plugin:AArch64Plugin"
+
+[variant.providers.openmp]
+requires = ["openmp-variant-provider @ git+https://github.com/wheelnext/openmp-variant-provider"]
+plugin-use = "build"
+
+[variant.providers.x86_64]
+requires = ["provider-variant-x86-64 @ git+https://github.com/wheelnext/variant_x86_64@dev"]
+enable-if = "platform_machine == 'x86_64' or platform_machine == 'AMD64'"
+plugin-api = "provider_variant_x86_64.plugin:X8664Plugin"
 
 [tool.pytest.ini_options]
 doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"

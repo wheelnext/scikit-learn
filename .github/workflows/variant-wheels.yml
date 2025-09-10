@@ -1,0 +1,121 @@
+name: Variant Wheel builder
+
+on:
+  push:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  build_wheels_x86_64:
+    name: Build wheel ${{ matrix.python }}-${{ matrix.openmp }}-x86_64-${{ matrix.x86_64 }}-${{ matrix.plat }}
+    runs-on: ${{ matrix.plat }}
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13", "3.14-dev"]
+        openmp: [gnu, intel, llvm]
+#        x86_64: [v1, v2, v3, v4]
+        plat: [ubuntu-22.04, macos-13]
+        include:
+          - plat: ubuntu-22.04
+            x86_64: v4
+            openmp: intel
+        exclude:
+          - plat: macos-13
+            openmp: gnu
+          - plat: macos-13
+            openmp: intel
+          - plat: ubuntu-22.04
+            openmp: llvm
+
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - uses: conda-incubator/setup-miniconda@v3
+        if: ${{ startsWith(matrix.plat, 'macos') }}
+        with:
+          miniforge-version: latest
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Build variant wheel
+        env:
+          PLAT: linux_x86_64
+          X8664: ${{ matrix.x86_64 }}
+          OPENMP: ${{ matrix.openmp }}
+        run: bash build-variants.sh -Ccompile-args=-v
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.openmp }}-${{ matrix.python }}-x86-64-${{ matrix.x86_64 }}-${{ matrix.plat }}
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+          compression-level: 0
+
+  build_wheels_aarch64:
+    name: Build wheel ${{ matrix.python }}-${{ matrix.openmp }}-armv-${{ matrix.aarch64 }}-${{ matrix.plat }}
+    runs-on: ${{ matrix.plat }}
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+        openmp: [gnu, llvm]
+        #aarch64: ["8a", "8.1a", "8.2a", "8.3a", "8.4a", "8.5a"]
+        plat: [ubuntu-22.04-arm, macos-14]
+        exclude:
+          - plat: macos-14
+            openmp: gnu
+          - plat: ubuntu-22.04-arm
+            openmp: llvm
+
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - uses: conda-incubator/setup-miniconda@v3
+        if: ${{ startsWith(matrix.plat, 'macos') }}
+        with:
+          miniforge-version: latest
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Build variant wheel
+        env:
+          PLAT: linux_aarch64
+          OPENMP: ${{ matrix.openmp }}
+        run: bash build-variants.sh -Ccompile-args=-v
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.openmp }}-${{ matrix.python }}-aarch64-armv${{ matrix.aarch64 }}-${{ matrix.plat }}
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+          compression-level: 0
+
+  combine_artifacts:
+    name: Combine artifacts
+    runs-on: ubuntu-22.04
+    needs: [build_wheels_x86_64, build_wheels_aarch64]
+    steps:
+      - uses: actions/download-artifact@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: combined
+          path: "*/*.whl"
+          if-no-files-found: error
+          compression-level: 0
