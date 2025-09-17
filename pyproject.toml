@@ -109,16 +109,16 @@ requires = [
 namespace = ["x86_64", "aarch64", "openmp"]
 
 [variant.providers.aarch64]
-requires = ["provider-variant-aarch64 @ git+https://github.com/wheelnext/variant_aarch64@dev"]
+requires = ["provider-variant-aarch64"]
 enable-if = "platform_machine == 'aarch64' or 'arm' in platform_machine"
 plugin-api = "provider_variant_aarch64.plugin:AArch64Plugin"
 
 [variant.providers.openmp]
-requires = ["openmp-variant-provider @ git+https://github.com/wheelnext/openmp-variant-provider"]
+requires = ["openmp-variant-provider"]
 plugin-use = "build"
 
 [variant.providers.x86_64]
-requires = ["provider-variant-x86-64 @ git+https://github.com/wheelnext/variant_x86_64@dev"]
+requires = ["provider-variant-x86-64"]
 enable-if = "platform_machine == 'x86_64' or platform_machine == 'AMD64'"
 plugin-api = "provider_variant_x86_64.plugin:X8664Plugin"
 

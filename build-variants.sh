@@ -2,6 +2,8 @@
 
 set -ex
 
+pip config set global.extra-index-url https://pypi.anaconda.org/mgorny/simple
+
 # TODO: move this logic to the plugin?
 case ${OPENMP} in
 	gnu)
