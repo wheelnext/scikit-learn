@@ -115,7 +115,7 @@ plugin-api = "provider_variant_aarch64.plugin:AArch64Plugin"
 
 [variant.providers.openmp]
 requires = ["openmp-variant-provider"]
-plugin-use = "build"
+install-time = false
 
 [variant.providers.x86_64]
 requires = ["provider-variant-x86-64"]
